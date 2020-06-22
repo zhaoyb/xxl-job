@@ -16,6 +16,7 @@ public class NetUtil {
 
     /**
      * find avaliable port
+     * 找到一个可用的http端口
      *
      * @param defaultPort
      * @return

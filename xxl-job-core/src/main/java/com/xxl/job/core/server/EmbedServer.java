@@ -43,24 +43,23 @@ public class EmbedServer {
                 // param
                 EventLoopGroup bossGroup = new NioEventLoopGroup();
                 EventLoopGroup workerGroup = new NioEventLoopGroup();
-                ThreadPoolExecutor bizThreadPool = new ThreadPoolExecutor(
-                        0,
-                        200,
-                        60L,
-                        TimeUnit.SECONDS,
-                        new LinkedBlockingQueue<Runnable>(2000),
-                        new ThreadFactory() {
-                            @Override
-                            public Thread newThread(Runnable r) {
-                                return new Thread(r, "xxl-rpc, EmbedServer bizThreadPool-" + r.hashCode());
-                            }
-                        },
-                        new RejectedExecutionHandler() {
-                            @Override
-                            public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                                throw new RuntimeException("xxl-job, EmbedServer bizThreadPool is EXHAUSTED!");
-                            }
-                        });
+                ThreadPoolExecutor bizThreadPool = new ThreadPoolExecutor(0,
+                                                                          200,
+                                                                          60L,
+                                                                          TimeUnit.SECONDS,
+                                                                          new LinkedBlockingQueue<Runnable>(2000),
+                                                                          new ThreadFactory() {
+                                                                              @Override
+                                                                              public Thread newThread(Runnable r) {
+                                                                                  return new Thread(r, "xxl-rpc, EmbedServer bizThreadPool-" + r.hashCode());
+                                                                              }
+                                                                          },
+                                                                          new RejectedExecutionHandler() {
+                                                                              @Override
+                                                                              public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+                                                                                  throw new RuntimeException("xxl-job, EmbedServer bizThreadPool is EXHAUSTED!");
+                                                                              }
+                                                                          });
 
 
                 try {
@@ -110,13 +109,13 @@ public class EmbedServer {
             }
 
         });
-        thread.setDaemon(true);	// daemon, service jvm, user thread leave >>> daemon leave >>> jvm leave
+        thread.setDaemon(true);    // daemon, service jvm, user thread leave >>> daemon leave >>> jvm leave
         thread.start();
     }
 
     public void stop() throws Exception {
         // destroy server thread
-        if (thread!=null && thread.isAlive()) {
+        if (thread != null && thread.isAlive()) {
             thread.interrupt();
         }
 
@@ -130,7 +129,7 @@ public class EmbedServer {
 
     /**
      * netty_http
-     *
+     * <p>
      * Copy from : https://github.com/xuxueli/xxl-rpc
      *
      * @author xuxueli 2015-11-24 22:25:15
@@ -141,6 +140,7 @@ public class EmbedServer {
         private ExecutorBiz executorBiz;
         private String accessToken;
         private ThreadPoolExecutor bizThreadPool;
+
         public EmbedHttpServerHandler(ExecutorBiz executorBiz, String accessToken, ThreadPoolExecutor bizThreadPool) {
             this.executorBiz = executorBiz;
             this.accessToken = accessToken;
@@ -180,11 +180,11 @@ public class EmbedServer {
             if (HttpMethod.POST != httpMethod) {
                 return new ReturnT<String>(ReturnT.FAIL_CODE, "invalid request, HttpMethod not support.");
             }
-            if (uri==null || uri.trim().length()==0) {
+            if (uri == null || uri.trim().length() == 0) {
                 return new ReturnT<String>(ReturnT.FAIL_CODE, "invalid request, uri-mapping empty.");
             }
-            if (accessToken!=null
-                    && accessToken.trim().length()>0
+            if (accessToken != null
+                    && accessToken.trim().length() > 0
                     && !accessToken.equals(accessTokenReq)) {
                 return new ReturnT<String>(ReturnT.FAIL_CODE, "The access token is wrong.");
             }
@@ -206,7 +206,7 @@ public class EmbedServer {
                     LogParam logParam = GsonTool.fromJson(requestData, LogParam.class);
                     return executorBiz.log(logParam);
                 } else {
-                    return new ReturnT<String>(ReturnT.FAIL_CODE, "invalid request, uri-mapping("+ uri +") not found.");
+                    return new ReturnT<String>(ReturnT.FAIL_CODE, "invalid request, uri-mapping(" + uri + ") not found.");
                 }
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);

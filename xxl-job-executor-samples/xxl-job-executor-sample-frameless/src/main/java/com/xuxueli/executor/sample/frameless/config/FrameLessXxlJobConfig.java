@@ -32,7 +32,7 @@ public class FrameLessXxlJobConfig {
      */
     public void initXxlJobExecutor() {
 
-        // registry jobhandler
+        // registry jobhandler  如果是依赖spring 容器，则自动注册  XxlJobSpringExecutor
         XxlJobExecutor.registJobHandler("demoJobHandler", new DemoJobHandler());
         XxlJobExecutor.registJobHandler("shardingJobHandler", new ShardingJobHandler());
         XxlJobExecutor.registJobHandler("httpJobHandler", new HttpJobHandler());
