@@ -68,7 +68,9 @@ public class TriggerCallbackThread {
 
                             // callback list param
                             List<HandleCallbackParam> callbackParamList = new ArrayList<HandleCallbackParam>();
+                            // 一次性获取队列中所有数据
                             int drainToNum = getInstance().callBackQueue.drainTo(callbackParamList);
+                            // 追加上首次获取的
                             callbackParamList.add(callback);
 
                             // callback, will retry if error
@@ -178,6 +180,7 @@ public class TriggerCallbackThread {
             }
         }
         if (!callbackRet) {
+            // 加入到失败队列文件
             appendFailCallbackFile(callbackParamList);
         }
     }

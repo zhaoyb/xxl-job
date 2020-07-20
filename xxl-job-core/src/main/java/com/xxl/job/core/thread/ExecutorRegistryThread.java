@@ -39,7 +39,7 @@ public class ExecutorRegistryThread {
             @Override
             public void run() {
 
-                // registry
+                // registry   注册
                 while (!toStop) {
                     try {
                         RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appname, address);
@@ -76,7 +76,7 @@ public class ExecutorRegistryThread {
                     }
                 }
 
-                // registry remove
+                // registry remove   移除注册
                 try {
                     RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appname, address);
                     for (AdminBiz adminBiz: XxlJobExecutor.getAdminBizList()) {

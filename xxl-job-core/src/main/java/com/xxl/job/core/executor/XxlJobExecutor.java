@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentMap;
 public class XxlJobExecutor {
     private static final Logger logger = LoggerFactory.getLogger(XxlJobExecutor.class);
 
-    // ---------------------- param ----------------------
+    // ---------------------- 配置信息 ----------------------
     /**
      * admin address
      */
@@ -76,6 +76,7 @@ public class XxlJobExecutor {
     public void start() throws Exception {
 
         // init logpath
+        // 初始化日志路径
         XxlJobFileAppender.initLogPath(logPath);
 
         // init invoker, admin-client
@@ -83,9 +84,11 @@ public class XxlJobExecutor {
 
 
         // init JobLogFileCleanThread
+        // 日志清理线程
         JobLogFileCleanThread.getInstance().start(logRetentionDays);
 
         // init TriggerCallbackThread
+        // 结果回调线程
         TriggerCallbackThread.getInstance().start();
 
         // init executor-server
@@ -155,6 +158,7 @@ public class XxlJobExecutor {
     private void initEmbedServer(String address, String ip, int port, String appname, String accessToken) throws Exception {
 
         // fill ip port
+        // 内嵌http服务器的IP和端口
         port = port > 0 ? port : NetUtil.findAvailablePort(9999);
         ip = (ip != null && ip.trim().length() > 0) ? ip : IpUtil.getIp();
 

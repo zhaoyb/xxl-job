@@ -67,6 +67,7 @@ public class JobScheduleHelper {
                     boolean preReadSuc = true;
                     try {
 
+                        // 加锁  利用数据库做并发锁
                         conn = XxlJobAdminConfig.getAdminConfig().getDataSource().getConnection();
                         connAutoCommit = conn.getAutoCommit();
                         conn.setAutoCommit(false);

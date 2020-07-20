@@ -74,6 +74,7 @@ public class EmbedServer {
                                             .addLast(new IdleStateHandler(0, 0, 30 * 3, TimeUnit.SECONDS))  // beat 3N, close if idle
                                             .addLast(new HttpServerCodec())
                                             .addLast(new HttpObjectAggregator(5 * 1024 * 1024))  // merge request & reponse to FULL
+                                            // http的实现
                                             .addLast(new EmbedHttpServerHandler(executorBiz, accessToken, bizThreadPool));
                                 }
                             })
@@ -137,6 +138,7 @@ public class EmbedServer {
     public static class EmbedHttpServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
         private static final Logger logger = LoggerFactory.getLogger(EmbedHttpServerHandler.class);
 
+        // 这里的实现是 ExecutorBizImpl
         private ExecutorBiz executorBiz;
         private String accessToken;
         private ThreadPoolExecutor bizThreadPool;

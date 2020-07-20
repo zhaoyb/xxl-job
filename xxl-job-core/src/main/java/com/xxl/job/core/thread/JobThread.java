@@ -131,7 +131,7 @@ public class JobThread extends Thread {
                     // execute
                     XxlJobLogger.log("<br>----------- xxl-job job execute start -----------<br>----------- Param:" + triggerParam.getExecutorParams());
 
-                    // 如果又超时时间，则异步执行，否则同步执行
+                    // 如果有超时时间，则异步执行，否则同步执行
                     if (triggerParam.getExecutorTimeout() > 0) {
                         // limit timeout
                         Thread futureThread = null;

@@ -96,7 +96,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
 
             Map<Method, XxlJob> annotatedMethods = null;   // referred to ：org.springframework.context.event.EventListenerMethodProcessor.processBean
             try {
-                // 找出实例中的有xxljob标注的方法
+                // 找出实例中的有@xxljob注解的方法
                 annotatedMethods = MethodIntrospector.selectMethods(bean.getClass(),
                         new MethodIntrospector.MetadataLookup<XxlJob>() {
                             @Override
@@ -118,6 +118,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
                     continue;
                 }
 
+                // job 名称
                 String name = xxlJob.value();
                 if (name.trim().length() == 0) {
                     throw new RuntimeException("xxl-job method-jobhandler name invalid, for[" + bean.getClass() + "#" + method.getName() + "] .");
@@ -128,22 +129,24 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
                 }
 
                 // execute method
-                // 方法参数不是预期的
+                // 方法参数不是预期的   即：方法必有只有一个参数，且参数类型是string类型
                 if (!(method.getParameterTypes().length == 1 && method.getParameterTypes()[0].isAssignableFrom(String.class))) {
                     throw new RuntimeException("xxl-job method-jobhandler param-classtype invalid, for[" + bean.getClass() + "#" + method.getName() + "] , " +
                             "The correct method format like \" public ReturnT<String> execute(String param) \" .");
                 }
-                // 方法返回值不是预期的
+                // 方法返回值不是预期的   即：方法返回值是ReturnT类型
                 if (!method.getReturnType().isAssignableFrom(ReturnT.class)) {
                     throw new RuntimeException("xxl-job method-jobhandler return-classtype invalid, for[" + bean.getClass() + "#" + method.getName() + "] , " +
                             "The correct method format like \" public ReturnT<String> execute(String param) \" .");
                 }
+                // 设置为可访问
                 method.setAccessible(true);
 
                 // init and destory
                 Method initMethod = null;
                 Method destroyMethod = null;
 
+                // job 运行前初始化方法
                 if (xxlJob.init().trim().length() > 0) {
                     try {
                         initMethod = bean.getClass().getDeclaredMethod(xxlJob.init());
@@ -152,6 +155,8 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
                         throw new RuntimeException("xxl-job method-jobhandler initMethod invalid, for[" + bean.getClass() + "#" + method.getName() + "] .");
                     }
                 }
+
+                // job 注销
                 if (xxlJob.destroy().trim().length() > 0) {
                     try {
                         destroyMethod = bean.getClass().getDeclaredMethod(xxlJob.destroy());
