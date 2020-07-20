@@ -104,7 +104,7 @@ public class JobTriggerPoolHelper {
                 } finally {
 
                     // check timeout-count-map
-                    // 一个分钟级的集合器，里面存放的是1分钟内 超时的job
+                    // 一个分钟级的集合器，里面存放的是1分钟内 超时的jobid 以及该job超时的次数
                     long minTim_now = System.currentTimeMillis()/60000;
                     if (minTim != minTim_now) {
                         minTim = minTim_now;
@@ -112,7 +112,7 @@ public class JobTriggerPoolHelper {
                     }
 
                     // incr timeout-count-map
-                    // 如果运行超过500ms， 则认为是超时，放入到一个超时集合中
+                    // 如果运行超过500ms， 则认为是耗时job，放入到一个耗时集合中
                     long cost = System.currentTimeMillis()-start;
                     if (cost > 500) {       // ob-timeout threshold 500ms
                         AtomicInteger timeoutCount = jobTimeoutCountMap.putIfAbsent(jobId, new AtomicInteger(1));

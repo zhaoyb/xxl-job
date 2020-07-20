@@ -53,6 +53,7 @@ public class JobScheduleHelper {
                 logger.info(">>>>>>>>> init xxl-job admin scheduler success.");
 
                 // pre-read count: treadpool-size * trigger-qps (each trigger cost 50ms, qps = 1000/50 = 20)
+                // 能够在1秒内处理的Job数
                 int preReadCount = (XxlJobAdminConfig.getAdminConfig().getTriggerPoolFastMax() + XxlJobAdminConfig.getAdminConfig().getTriggerPoolSlowMax()) * 20;
 
                 while (!scheduleThreadToStop) {
@@ -79,60 +80,67 @@ public class JobScheduleHelper {
 
                         // 1、pre read
                         long nowTime = System.currentTimeMillis();
+                        // 获取触发时间 <= now+5的job
                         List<XxlJobInfo> scheduleList = XxlJobAdminConfig.getAdminConfig().getXxlJobInfoDao().scheduleJobQuery(nowTime + PRE_READ_MS, preReadCount);
                         if (scheduleList != null && scheduleList.size() > 0) {
                             // 2、push time-ring
                             for (XxlJobInfo jobInfo : scheduleList) {
 
-                                // time-ring jump
+                                // time-ring jump  已经过期的触发，并且触发时间和现在时间差大于5秒，那就不触发了
                                 if (nowTime > jobInfo.getTriggerNextTime() + PRE_READ_MS) {
                                     // 2.1、trigger-expire > 5s：pass && make next-trigger-time
                                     logger.warn(">>>>>>>>>>> xxl-job, schedule misfire, jobId = " + jobInfo.getId());
 
-                                    // fresh next
+                                    // fresh next 新的触发时间
                                     refreshNextValidTime(jobInfo, new Date());
 
                                 } else if (nowTime > jobInfo.getTriggerNextTime()) {
+                                    // 已经过期的触发，触发时间和现在时间差 小于5秒， 则直接触发，并且获取新的刷新时间
                                     // 2.2、trigger-expire < 5s：direct-trigger && make next-trigger-time
 
-                                    // 1、trigger
+                                    // 1、trigger  直接触发
                                     JobTriggerPoolHelper.trigger(jobInfo.getId(), TriggerTypeEnum.CRON, -1, null, null, null);
                                     logger.debug(">>>>>>>>>>> xxl-job, schedule push trigger : jobId = " + jobInfo.getId());
 
-                                    // 2、fresh next
+                                    // 2、fresh next  获取新的触发时间
                                     refreshNextValidTime(jobInfo, new Date());
 
                                     // next-trigger-time in 5s, pre-read again
+                                    // 如果新的触发时间是在5秒内触发
                                     if (jobInfo.getTriggerStatus() == 1 && nowTime + PRE_READ_MS > jobInfo.getTriggerNextTime()) {
 
                                         // 1、make ring second
+                                        // 时间轮盘 ，放入到时间轮盘的哪个格子
                                         int ringSecond = (int) ((jobInfo.getTriggerNextTime() / 1000) % 60);
 
                                         // 2、push time ring
+                                        // 放入到时间轮盘中
                                         pushTimeRing(ringSecond, jobInfo.getId());
 
-                                        // 3、fresh next
+                                        // 3、fresh next  再次刷新 触发时间
                                         refreshNextValidTime(jobInfo, new Date(jobInfo.getTriggerNextTime()));
 
                                     }
 
                                 } else {
+                                    // 在未来5秒内触发
                                     // 2.3、trigger-pre-read：time-ring trigger && make next-trigger-time
 
                                     // 1、make ring second
+                                    // 时间轮盘格子
                                     int ringSecond = (int) ((jobInfo.getTriggerNextTime() / 1000) % 60);
 
-                                    // 2、push time ring
+                                    // 2、push time ring  放入时间轮盘
                                     pushTimeRing(ringSecond, jobInfo.getId());
 
-                                    // 3、fresh next
+                                    // 3、fresh next   刷新 新的触发时间
                                     refreshNextValidTime(jobInfo, new Date(jobInfo.getTriggerNextTime()));
 
                                 }
 
                             }
 
-                            // 3、update trigger info
+                            // 3、update trigger info 更新DB
                             for (XxlJobInfo jobInfo : scheduleList) {
                                 XxlJobAdminConfig.getAdminConfig().getXxlJobInfoDao().scheduleUpdate(jobInfo);
                             }
@@ -150,7 +158,7 @@ public class JobScheduleHelper {
                         }
                     } finally {
 
-                        // commit
+                        // commit  提交 关闭连接
                         if (conn != null) {
                             try {
                                 conn.commit();
@@ -189,7 +197,7 @@ public class JobScheduleHelper {
                     long cost = System.currentTimeMillis() - start;
 
 
-                    // Wait seconds, align second
+                    // Wait seconds, align second  时间对齐
                     if (cost < 1000) {  // scan-overtime, not wait
                         try {
                             // pre-read period: success > scan each second; fail > skip this period;
@@ -230,6 +238,7 @@ public class JobScheduleHelper {
                     try {
                         // second data
                         List<Integer> ringItemData = new ArrayList<>();
+                        // 获取当前时间，仅秒数
                         int nowSecond = Calendar.getInstance().get(Calendar.SECOND);   // 避免处理耗时太长，跨过刻度，向前校验一个刻度；
                         for (int i = 0; i < 2; i++) {
                             List<Integer> tmpData = ringData.remove((nowSecond + 60 - i) % 60);
@@ -256,6 +265,7 @@ public class JobScheduleHelper {
                     }
 
                     // next second, align second
+                    // 时间对齐
                     try {
                         TimeUnit.MILLISECONDS.sleep(1000 - System.currentTimeMillis() % 1000);
                     } catch (InterruptedException e) {
